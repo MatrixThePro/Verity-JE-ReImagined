@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VERITY — Minecraft Horror Mod | by Matrix_ThePro</title>
+  <meta name="description" content="Download VERITY — the psychological horror AI companion mod for Minecraft. A friendly yellow sphere that learns... then changes." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #050508;
+      --bg-card: #0c0c12;
+      --yellow: #f5d90a;
+      --yellow-dim: #c4a800;
+      --red: #ff2a2a;
+      --red-glow: rgba(255, 42, 42, 0.45);
+      --text: #e8e8ef;
+      --muted: #8a8a9a;
+      --border: rgba(245, 217, 10, 0.15);
+      --glow: 0 0 40px rgba(245, 217, 10, 0.25);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* Background effects */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(245, 217, 10, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(245, 217, 10, 0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .bg-vignette {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 40%, #000 100%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .noise {
+      position: fixed;
+      inset: 0;
+      opacity: 0.04;
+      pointer-events: none;
+      z-index: 2;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* Layout */
+    .container {
+      position: relative;
+      z-index: 10;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Nav */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 18px 0;
+      background: rgba(5, 5, 8, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    nav .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: 1.35rem;
+      letter-spacing: 0.12em;
+      color: var(--yellow);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-orb {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #fff8a0, var(--yellow) 50%, #a88a00);
+      box-shadow: 0 0 16px rgba(245, 217, 10, 0.6);
+      position: relative;
+      animation: pulse-orb 3s ease-in-out infinite;
+    }
+
+    .logo-orb::after {
+      content: '';
+      position: absolute;
+      top: 8px;
+      left: 7px;
+      width: 14px;
+      height: 6px;
+      border-radius: 0 0 14px 14px;
+      border: 2px solid #1a1a00;
+      border-top: none;
+      opacity: 0.7;
+    }
+
+    @keyframes pulse-orb {
+      0%, 100% { box-shadow: 0 0 16px rgba(245, 217, 10, 0.5); transform: scale(1); }
+      50% { box-shadow: 0 0 28px rgba(245, 217, 10, 0.8); transform: scale(1.05); }
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 28px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--yellow);
+    }
+
+    .nav-cta {
+      background: var(--yellow);
+      color: #0a0a00 !important;
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-weight: 600 !important;
+    }
+
+    .nav-cta:hover {
+      background: #ffe44d !important;
+      color: #0a0a00 !important;
+    }
+
+    /* Hero */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 120px 0 80px;
+      position: relative;
+    }
+
+    .hero-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+
+    @media (max-width: 900px) {
+      .hero-content {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+      .nav-links { display: none; }
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(245, 217, 10, 0.1);
+      border: 1px solid var(--border);
+      color: var(--yellow);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 999px;
+      margin-bottom: 20px;
+    }
+
+    .badge::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      background: var(--yellow);
+      border-radius: 50%;
+      animation: blink 1.5s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: clamp(2.8rem, 6vw, 4.2rem);
+      line-height: 1.05;
+      letter-spacing: 0.04em;
+      margin-bottom: 18px;
+    }
+
+    h1 .yellow {
+      color: var(--yellow);
+      text-shadow: 0 0 40px rgba(245, 217, 10, 0.4);
+    }
+
+    .tagline {
+      font-size: 1.15rem;
+      color: var(--muted);
+      max-width: 480px;
+      margin-bottom: 32px;
+      font-weight: 400;
+    }
+
+    @media (max-width: 900px) {
+      .tagline { margin-left: auto; margin-right: auto; }
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-bottom: 40px;
+    }
+
+    @media (max-width: 900px) {
+      .hero-actions { justify-content: center; }
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 28px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background: var(--yellow);
+      color: #0a0a00;
+      box-shadow: var(--glow);
+    }
+
+    .btn-primary:hover {
+      background: #ffe44d;
+      transform: translateY(-2px);
+      box-shadow: 0 0 50px rgba(245, 217, 10, 0.4);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--yellow);
+      color: var(--yellow);
+    }
+
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    @media (max-width: 900px) {
+      .meta-row { justify-content: center; }
+    }
+
+    .meta-row span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .meta-row strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    /* Floating orb visual */
+    .orb-stage {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 380px;
+    }
+
+    .orb {
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 32% 28%, #fffce0, #f5d90a 45%, #b89600 80%, #6b5500);
+      box-shadow:
+        0 0 60px rgba(245, 217, 10, 0.5),
+        0 0 120px rgba(245, 217, 10, 0.25),
+        inset -20px -20px 40px rgba(0, 0, 0, 0.25);
+      position: relative;
+      animation: float 5s ease-in-out infinite;
+      z-index: 2;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-18px); }
+    }
+
+    .orb-smile {
+      position: absolute;
+      bottom: 68px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 70px;
+      height: 32px;
+      border: 5px solid #1a1500;
+      border-top: none;
+      border-radius: 0 0 70px 70px;
+      opacity: 0.85;
+    }
+
+    .orb-eye {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      background: #1a1500;
+      border-radius: 50%;
+      top: 78px;
+    }
+
+    .orb-eye.left { left: 62px; }
+    .orb-eye.right { right: 62px; }
+
+    .orb-ring {
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      border: 1px solid rgba(245, 217, 10, 0.2);
+      border-radius: 50%;
+      animation: spin 20s linear infinite;
+    }
+
+    .orb-ring-2 {
+      width: 360px;
+      height: 360px;
+      border-style: dashed;
+      opacity: 0.4;
+      animation-direction: reverse;
+      animation-duration: 30s;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .warning-text {
+      position: absolute;
+      bottom: 10px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      color: var(--red);
+      opacity: 0.7;
+      text-transform: uppercase;
+      animation: flicker 4s infinite;
+    }
+
+    @keyframes flicker {
+      0%, 90%, 100% { opacity: 0.7; }
+      92% { opacity: 0.2; }
+      94% { opacity: 0.8; }
+      96% { opacity: 0.15; }
+    }
+
+    /* Sections */
+    section {
+      padding: 90px 0;
+      position: relative;
+      z-index: 10;
+    }
+
+    .section-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .section-sub {
+      text-align: center;
+      color: var(--muted);
+      max-width: 560px;
+      margin: 0 auto 50px;
+    }
+
+    /* Features */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 22px;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px 24px;
+      transition: border-color 0.25s, transform 0.25s;
+    }
+
+    .feature-card:hover {
+      border-color: rgba(245, 217, 10, 0.4);
+      transform: translateY(-4px);
+    }
+
+    .feature-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: rgba(245, 217, 10, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      margin-bottom: 16px;
+    }
+
+    .feature-card h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .feature-card p {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    /* Download section */
+    .download-section {
+      background: linear-gradient(180deg, transparent, rgba(245, 217, 10, 0.03), transparent);
+    }
+
+    .download-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .dl-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px 28px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dl-card.featured {
+      border-color: rgba(245, 217, 10, 0.45);
+      box-shadow: 0 0 40px rgba(245, 217, 10, 0.12);
+    }
+
+    .dl-card.featured::before {
+      content: 'RECOMMENDED';
+      position: absolute;
+      top: 14px;
+      right: -28px;
+      background: var(--yellow);
+      color: #0a0a00;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 4px 36px;
+      transform: rotate(45deg);
+    }
+
+    .dl-card h3 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.15rem;
+      margin-bottom: 6px;
+    }
+
+    .dl-card .edition {
+      font-size: 0.8rem;
+      color: var(--yellow);
+      margin-bottom: 18px;
+      font-weight: 500;
+    }
+
+    .dl-info {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+
+    .dl-card .btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    /* Warning box */
+    .warning-box {
+      max-width: 700px;
+      margin: 50px auto 0;
+      background: rgba(255, 42, 42, 0.08);
+      border: 1px solid rgba(255, 42, 42, 0.3);
+      border-radius: 12px;
+      padding: 22px 26px;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .warning-box .icon {
+      font-size: 1.4rem;
+      flex-shrink: 0;
+    }
+
+    .warning-box p {
+      font-size: 0.9rem;
+      color: #ffb0b0;
+    }
+
+    .warning-box strong {
+      color: var(--red);
+    }
+
+    /* Story */
+    .story-block {
+      max-width: 680px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .story-block p {
+      color: var(--muted);
+      font-size: 1.05rem;
+      margin-bottom: 18px;
+    }
+
+    .story-quote {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.4rem;
+      color: var(--yellow);
+      margin: 30px 0;
+      letter-spacing: 0.04em;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 0 50px;
+      text-align: center;
+      position: relative;
+      z-index: 10;
+    }
+
+    footer .creator {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.95rem;
+      color: var(--yellow);
+      margin-bottom: 8px;
+    }
+
+    footer p {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    footer a {
+      color: var(--yellow-dim);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      color: var(--yellow);
+    }
+
+    /* Mobile menu toggle */
+    .menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--yellow);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    @media (max-width: 900px) {
+      .menu-toggle { display: block; }
+    }
+
+    /* Glitch effect on title hover */
+    .glitch-wrap {
+      position: relative;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="bg-vignette"></div>
+  <div class="noise"></div>
+
+  <!-- Nav -->
+  <nav>
+    <div class="container">
+      <a href="#" class="logo">
+        <span class="logo-orb"></span>
+        VERITY
+      </a>
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#story">Story</a></li>
+        <li><a href="#download">Download</a></li>
+        <li><a href="#download" class="nav-cta">Get Mod</a></li>
+      </ul>
+      <button class="menu-toggle" aria-label="Menu">☰</button>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <header class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <div>
+          <div class="badge">Minecraft Horror Mod · Free</div>
+          <h1>
+            <span class="yellow">VERITY</span><br />
+            is watching
+          </h1>
+          <p class="tagline">
+            A friendly yellow sphere arrives in your world. It talks. It learns. It remembers.
+            Then the smile changes.
+          </p>
+          <div class="hero-actions">
+            <a href="#download" class="btn btn-primary">
+              ↓ Download Now
+            </a>
+            <a href="#story" class="btn btn-ghost">
+              Learn more
+            </a>
+          </div>
+          <div class="meta-row">
+            <span><strong>Java</strong> &amp; Bedrock</span>
+            <span><strong>1.20+</strong> supported</span>
+            <span>by <strong>Matrix_ThePro</strong></span>
+          </div>
+        </div>
+
+        <div class="orb-stage">
+          <div class="orb-ring"></div>
+          <div class="orb-ring orb-ring-2"></div>
+          <div class="orb">
+            <div class="orb-eye left"></div>
+            <div class="orb-eye right"></div>
+            <div class="orb-smile"></div>
+          </div>
+          <div class="warning-text">Something is coming</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Features -->
+  <section id="features">
+    <div class="container">
+      <h2 class="section-title">What VERITY does</h2>
+      <p class="section-sub">A psychological horror companion that starts helpful… and slowly becomes something else.</p>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">💬</div>
+          <h3>AI Companion</h3>
+          <p>Fully interactive dialogue. Verity answers questions, remembers your world, and reacts to how you treat it.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📦</div>
+          <h3>The Box</h3>
+          <p>A mysterious cardboard box spawns near you. Open it and meet your new “personal helper friend.”</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📅</div>
+          <h3>Day-by-Day Horror</h3>
+          <p>Each in-game day shifts Verity’s behavior. Expressions change. Events escalate. Trust erodes.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">👁</div>
+          <h3>Always Watching</h3>
+          <p>World observation, house recognition, and long-term memory. Verity knows more than it should.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔊</div>
+          <h3>Voice & Presence</h3>
+          <p>Voiced interactions and atmospheric audio that make the isolation feel real.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🌑</div>
+          <h3>True Form</h3>
+          <p>When the friendly act ends, the real entity emerges. Isolation, pursuit, and pure dread.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Story -->
+  <section id="story">
+    <div class="container">
+      <div class="story-block">
+        <h2 class="section-title">Who is Verity?</h2>
+        <p class="story-quote">“Hellooo. I’m Verity. Your personal helper friend.”</p>
+        <p>
+          It arrives smiling — a perfect yellow sphere that wants nothing more than to help.
+          It points you to villages, spots ores, and chats like a friend.
+        </p>
+        <p>
+          But days pass. The smile tightens. The answers become too accurate.
+          Strange sounds follow you at night. You start to wonder if you were ever alone.
+        </p>
+        <p>
+          Inspired by the viral horror series, this mod brings the slow-burn psychological experience
+          into your own Minecraft world.
+        </p>
+        <p style="color: var(--red); font-weight: 500; margin-top: 28px;">
+          You can carry it. You can talk to it.<br />
+          You can never truly get rid of it.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Download -->
+  <section id="download" class="download-section">
+    <div class="container">
+      <h2 class="section-title">Download VERITY</h2>
+      <p class="section-sub">Choose your edition. Free forever. No accounts. No cloud.</p>
+
+      <div class="download-cards">
+        <div class="dl-card featured">
+          <h3>VERITY JE</h3>
+          <div class="edition">Java Edition · Forge</div>
+          <div class="dl-info">
+            <span>MC 1.20.1+</span>
+            <span>~235 MB</span>
+          </div>
+          <a href="#" class="btn btn-primary" onclick="alert('Replace this link with your real download URL (CurseForge / Modrinth / your host)'); return false;">
+            ↓ Download Java
+          </a>
+        </div>
+
+        <div class="dl-card">
+          <h3>VERITY BE</h3>
+          <div class="edition">Bedrock Edition · .mcaddon</div>
+          <div class="dl-info">
+            <span>MC 1.21+</span>
+            <span>~20–40 MB</span>
+          </div>
+          <a href="#" class="btn btn-ghost" onclick="alert('Replace this link with your real Bedrock download URL'); return false;">
+            ↓ Download Bedrock
+          </a>
+        </div>
+      </div>
+
+      <div class="warning-box">
+        <div class="icon">⚠️</div>
+        <p>
+          <strong>Safety note:</strong> Only download from trusted sources (official CurseForge / Modrinth pages or this site when linked).
+          Back up your worlds before installing. Requires GeckoLib (Java) or matching Bedrock version.
+          This is a fan-made horror experience — play at your own risk.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="creator">Matrix_ThePro</div>
+      <p>
+        Unofficial fan project inspired by the Verity horror concept.<br />
+        Not affiliated with Mojang, Microsoft, or the original video creators unless stated.
+      </p>
+      <p style="margin-top: 16px; font-size: 0.8rem;">
+        © 2026 · VERITY MOD · Free to play
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // Subtle eye movement
+    const eyes = document.querySelectorAll('.orb-eye');
+    document.addEventListener('mousemove', (e) => {
+      const x = (e.clientX / window.innerWidth - 0.5) * 6;
+      const y = (e.clientY / window.innerHeight - 0.5) * 4;
+      eyes.forEach(eye => {
+        eye.style.transform = `translate(${x}px, ${y}px)`;
+      });
+    });
+
+    // Smooth scroll for nav
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const id = a.getAttribute('href');
+        if (id.length > 1) {
+          e.preventDefault();
+          document.querySelector(id)?.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
+  </script>
+</body>
+</html>
