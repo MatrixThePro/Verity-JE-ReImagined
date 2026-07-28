@@ -202,7 +202,7 @@ body {
 /* ===== MOBILE OPTIMIZATIONS ===== */
 @media (max-width: 767px) {
   /* Hero */
-  #hero { min-height: 100dvh; padding-top: 5rem; padding-bottom: 4rem; }
+  #hero { min-height: 100dvh; padding-top: 6rem; padding-bottom: 4rem; }
   #hero h1 { font-size: 2.5rem; line-height: 1.1; }
   #hero .float img { width: 4.5rem; height: 4.5rem; }
   #hero p.text-base { font-size: 0.875rem; }
