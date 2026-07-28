@@ -12,10 +12,25 @@ if (isMobile) {
   if (loader) loader.remove();
   document.body.style.overflow = '';
 } else {
-  // Desktop: play loader video
+  // Desktop: play loader video with timeout fallback
+  function dismissLoader() {
+    if (!loader || loader.dataset.dismissed) return;
+    loader.dataset.dismissed = '1';
+    clearInterval(progressInterval);
+    loaderBar.style.width = '100%';
+    loader.style.transition = 'opacity 0.5s ease';
+    loader.style.opacity = '0';
+    loader.style.pointerEvents = 'none';
+    document.body.style.overflow = '';
+    setTimeout(() => { if (loader) loader.remove(); }, 600);
+  }
+
   loaderVideo.muted = true;
-  loaderVideo.play().catch(() => {});
+  loaderVideo.play().catch(() => { setTimeout(dismissLoader, 1000); });
   loaderVideo.loop = false;
+
+  // Fallback: dismiss after 8s no matter what
+  setTimeout(dismissLoader, 8000);
 
   let audioUnmuted = false;
   function unmuteOnGesture() {
@@ -30,16 +45,7 @@ if (isMobile) {
   document.addEventListener('keydown', unmuteOnGesture);
   document.addEventListener('touchstart', unmuteOnGesture);
 
-  loaderVideo.addEventListener('ended', () => {
-    loaderBar.style.width = '100%';
-    setTimeout(() => {
-      loader.style.transition = 'opacity 0.5s ease';
-      loader.style.opacity = '0';
-      loader.style.pointerEvents = 'none';
-      document.body.style.overflow = '';
-      setTimeout(() => loader.remove(), 600);
-    }, 200);
-  });
+  loaderVideo.addEventListener('ended', dismissLoader);
 
   const progressInterval = setInterval(() => {
     if (loaderVideo.duration) {
