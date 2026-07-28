@@ -165,6 +165,8 @@ sections.forEach(s => sectionObs.observe(s));
 // ===== DOWNLOAD BUTTON POPUP =====
 const downloadBtn = document.getElementById('download-btn');
 const mobileDownloadBtn = document.getElementById('mobile-download-btn');
+const navDlBtn = document.getElementById('nav-dl-btn');
+const specsDownloadBtn = document.querySelector('.specs-download-btn');
 const toastOverlay = document.getElementById('toast-overlay');
 const toastClose = document.getElementById('toast-close');
 
@@ -177,6 +179,8 @@ function hideToast() {
 
 if (downloadBtn) downloadBtn.addEventListener('click', (e) => { e.preventDefault(); showToast(); });
 if (mobileDownloadBtn) mobileDownloadBtn.addEventListener('click', (e) => { e.preventDefault(); hideMenu(); showToast(); });
+if (navDlBtn) navDlBtn.addEventListener('click', (e) => { e.preventDefault(); showToast(); });
+if (specsDownloadBtn) specsDownloadBtn.addEventListener('click', (e) => { e.preventDefault(); showToast(); });
 if (toastClose) toastClose.addEventListener('click', hideToast);
 if (toastOverlay) toastOverlay.addEventListener('click', (e) => { if (e.target === toastOverlay) hideToast(); });
 
