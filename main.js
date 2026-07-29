@@ -13,11 +13,13 @@ if (isMobile) {
   document.body.style.overflow = '';
 } else {
   // Desktop: play loader video with timeout fallback
+  let progressInterval;
+
   function dismissLoader() {
     if (!loader || loader.dataset.dismissed) return;
     loader.dataset.dismissed = '1';
-    clearInterval(progressInterval);
-    loaderBar.style.width = '100%';
+    if (progressInterval) clearInterval(progressInterval);
+    if (loaderBar) loaderBar.style.width = '100%';
     loader.style.transition = 'opacity 0.5s ease';
     loader.style.opacity = '0';
     loader.style.pointerEvents = 'none';
@@ -25,35 +27,39 @@ if (isMobile) {
     setTimeout(() => { if (loader) loader.remove(); }, 600);
   }
 
-  loaderVideo.muted = true;
-  loaderVideo.play().catch(() => { setTimeout(dismissLoader, 1000); });
-  loaderVideo.loop = false;
+  if (loaderVideo) {
+    loaderVideo.muted = true;
+    loaderVideo.play().catch(() => { setTimeout(dismissLoader, 1000); });
+    loaderVideo.loop = false;
+
+    let audioUnmuted = false;
+    function unmuteOnGesture() {
+      if (audioUnmuted) return;
+      audioUnmuted = true;
+      loaderVideo.muted = false;
+      document.removeEventListener('click', unmuteOnGesture);
+      document.removeEventListener('keydown', unmuteOnGesture);
+      document.removeEventListener('touchstart', unmuteOnGesture);
+    }
+    document.addEventListener('click', unmuteOnGesture);
+    document.addEventListener('keydown', unmuteOnGesture);
+    document.addEventListener('touchstart', unmuteOnGesture);
+
+    loaderVideo.addEventListener('ended', dismissLoader);
+
+    progressInterval = setInterval(() => {
+      if (loaderVideo.duration) {
+        const pct = (loaderVideo.currentTime / loaderVideo.duration) * 100;
+        if (loaderBar) loaderBar.style.width = pct + '%';
+      }
+      if (loaderVideo.ended) clearInterval(progressInterval);
+    }, 100);
+  } else {
+    setTimeout(dismissLoader, 500);
+  }
 
   // Fallback: dismiss after 8s no matter what
   setTimeout(dismissLoader, 8000);
-
-  let audioUnmuted = false;
-  function unmuteOnGesture() {
-    if (audioUnmuted) return;
-    audioUnmuted = true;
-    loaderVideo.muted = false;
-    document.removeEventListener('click', unmuteOnGesture);
-    document.removeEventListener('keydown', unmuteOnGesture);
-    document.removeEventListener('touchstart', unmuteOnGesture);
-  }
-  document.addEventListener('click', unmuteOnGesture);
-  document.addEventListener('keydown', unmuteOnGesture);
-  document.addEventListener('touchstart', unmuteOnGesture);
-
-  loaderVideo.addEventListener('ended', dismissLoader);
-
-  const progressInterval = setInterval(() => {
-    if (loaderVideo.duration) {
-      const pct = (loaderVideo.currentTime / loaderVideo.duration) * 100;
-      loaderBar.style.width = pct + '%';
-    }
-    if (loaderVideo.ended) clearInterval(progressInterval);
-  }, 100);
 
   document.body.style.overflow = 'hidden';
 }
